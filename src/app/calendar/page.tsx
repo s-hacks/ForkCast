@@ -6,6 +6,7 @@ import { viewerOf } from "@/server/services/commitments";
 import { addDays, isDateString, monthRange, prettyDate, todayIn } from "@/server/domain/dates";
 import { AppHeader, contextLabelOf } from "@/components/app-header";
 import { StatusBadge, StatusLegend, PERIOD_LABEL } from "@/components/status";
+import { WeekView, WeekLegend } from "@/components/volunteer/week-view";
 
 export const dynamic = "force-dynamic";
 
@@ -18,20 +19,27 @@ function shiftMonth(month: string, n: number): string {
 }
 const dow = (d: string) => new Date(`${d}T12:00:00Z`).getUTCDay();
 
-export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string; date?: string }> }) {
+export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string; date?: string; view?: string }> }) {
   const s = await pageVolunteer();
   const sp = await searchParams;
   const today = todayIn(config().SHELTER_TIMEZONE);
   const month = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : sp.date && isDateString(sp.date) ? sp.date.slice(0, 7) : today.slice(0, 7);
-  const { from, to } = monthRange(month);
+  const view = sp.view === "month" ? "month" : "week";
+  const anchor = sp.date && isDateString(sp.date) ? sp.date : today;
+  const weekStart = addDays(anchor, -dow(anchor));
+  const weekEnd = addDays(weekStart, 6);
+  const { from, to } = view === "week" ? { from: weekStart, to: weekEnd } : monthRange(month);
   const selected = sp.date && isDateString(sp.date) && sp.date.startsWith(month) ? sp.date : today.startsWith(month) ? today : from;
   const slots = await listSlots(from, to, viewerOf(s));
   const byDate = new Map<string, SlotSummary[]>();
   for (const sl of slots) byDate.set(sl.date, [...(byDate.get(sl.date) ?? []), sl]);
   const days: string[] = [];
   for (let d = from; d <= to; d = addDays(d, 1)) days.push(d);
-  const lead = dow(from);
-  const monthLabel = new Date(`${from}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  const lead = view === "month" ? dow(from) : 0;
+  const fmt = (d: string, o: Intl.DateTimeFormatOptions) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { ...o, timeZone: "UTC" });
+  const monthLabel = fmt(from, { month: "long", year: "numeric" });
+  const weekLabel = `${fmt(weekStart, { month: "short", day: "numeric" })} – ${fmt(weekEnd, { month: "short", day: "numeric", year: "numeric" })}`;
+  const tab = (active: boolean) => `rounded-md px-3 py-1.5 text-sm font-semibold ${active ? "bg-white text-brand shadow" : "text-slate-600 hover:text-brand"}`;
   const isOrg = s.context.type === "ORGANIZATION";
 
   return (
@@ -40,20 +48,39 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold">Meal calendar</h1>
-          <nav aria-label="Month navigation" className="ml-auto flex items-center gap-2">
-            <Link href={`/calendar?month=${shiftMonth(month, -1)}`} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50" aria-label="Previous month">← Prev</Link>
-            <span className="min-w-36 text-center font-semibold" aria-live="polite">{monthLabel}</span>
-            <Link href={`/calendar?month=${shiftMonth(month, 1)}`} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50" aria-label="Next month">Next →</Link>
-            <Link href="/calendar" className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50">Today</Link>
+          <nav aria-label="View" className="flex rounded-lg bg-slate-200/70 p-1">
+            <Link href={`/calendar?view=week&date=${view === "week" ? weekStart : selected}`} aria-current={view === "week" ? "page" : undefined} className={tab(view === "week")}>Week</Link>
+            <Link href={`/calendar?view=month&month=${view === "week" ? weekStart.slice(0, 7) : month}`} aria-current={view === "month" ? "page" : undefined} className={tab(view === "month")}>Month</Link>
           </nav>
+          {view === "week" ? (
+            <nav aria-label="Week navigation" className="ml-auto flex items-center gap-2">
+              <Link href={`/calendar?view=week&date=${addDays(weekStart, -7)}`} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50" aria-label="Previous week">← Prev</Link>
+              <span className="min-w-44 text-center font-semibold" aria-live="polite">{weekLabel}</span>
+              <Link href={`/calendar?view=week&date=${addDays(weekStart, 7)}`} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50" aria-label="Next week">Next →</Link>
+              <Link href="/calendar" className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50">Today</Link>
+            </nav>
+          ) : (
+            <nav aria-label="Month navigation" className="ml-auto flex items-center gap-2">
+              <Link href={`/calendar?view=month&month=${shiftMonth(month, -1)}`} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50" aria-label="Previous month">← Prev</Link>
+              <span className="min-w-36 text-center font-semibold" aria-live="polite">{monthLabel}</span>
+              <Link href={`/calendar?view=month&month=${shiftMonth(month, 1)}`} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50" aria-label="Next month">Next →</Link>
+              <Link href="/calendar?view=month" className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50">Today</Link>
+            </nav>
+          )}
         </div>
-        <div className="mt-3"><StatusLegend /></div>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2"><StatusLegend /><WeekLegend isOrg={isOrg} /></div>
         <p className="mt-2 text-sm text-slate-600">
-          {isOrg
-            ? "Colors show overall availability across all volunteers. Dots mark your organization's commitments; other groups' details stay private."
-            : "Colors show overall availability across all volunteers. Dots mark your own commitments."}
+          {view === "week"
+            ? "Status shows overall availability. Blue outlines are your commitments" + (isOrg ? ", purple are your organization's. Other groups stay private." : ".")
+            : isOrg
+              ? "Colors show overall availability across all volunteers. Dots mark your organization's commitments; other groups' details stay private."
+              : "Colors show overall availability across all volunteers. Dots mark your own commitments."}
         </p>
 
+        {view === "week" ? (
+          <div className="mt-4"><WeekView days={days} byDate={byDate} today={today} isOrg={isOrg} /></div>
+        ) : (
+          <>
         {/* Mobile: date strip + agenda */}
         <div className="mt-4 md:hidden">
           <div className="flex gap-1 overflow-x-auto pb-2" role="list" aria-label="Choose a date">
@@ -61,7 +88,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               <Link
                 role="listitem"
                 key={d}
-                href={`/calendar?month=${month}&date=${d}`}
+                href={`/calendar?view=month&month=${month}&date=${d}`}
                 aria-current={d === selected ? "date" : undefined}
                 className={`flex min-w-12 flex-col items-center rounded border px-2 py-1 text-xs ${d === selected ? "border-blue-600 bg-blue-50 font-semibold" : "border-slate-200 bg-white"}`}
               >
@@ -81,7 +108,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             {Array.from({ length: lead }).map((_, i) => <div key={`pad${i}`} className="bg-slate-50" aria-hidden />)}
             {days.map((d) => (
               <div key={d} role="gridcell" className={`min-h-28 bg-white p-1.5 ${d === selected ? "ring-2 ring-inset ring-blue-500" : ""}`}>
-                <Link href={`/calendar?month=${month}&date=${d}`} className={`text-xs font-semibold ${d === today ? "rounded bg-brand px-1.5 text-white" : "text-slate-700"}`} aria-label={`Show ${prettyDate(d)}`}>
+                <Link href={`/calendar?view=month&month=${month}&date=${d}`} className={`text-xs font-semibold ${d === today ? "rounded bg-brand px-1.5 text-white" : "text-slate-700"}`} aria-label={`Show ${prettyDate(d)}`}>
                   {Number(d.slice(8))}
                 </Link>
                 <ul className="mt-1 space-y-0.5">
@@ -98,6 +125,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             {(byDate.get(selected) ?? []).map((sl) => <DayCard key={sl.period} sl={sl} isOrg={isOrg} />)}
           </ul>
         </section>
+          </>
+        )}
       </main>
     </>
   );
