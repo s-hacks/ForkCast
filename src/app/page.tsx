@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/session";
+import { BrandPanel } from "@/components/brand-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -8,22 +9,25 @@ export default async function Landing() {
   const s = await getSession();
   if (s) redirect(s.user.role === "ADMIN" ? "/admin" : s.context ? "/calendar" : "/context");
   return (
-    <main id="main" className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-4 py-16">
-      <p className="text-sm font-semibold uppercase tracking-widest text-brand">Firehouse Ministries</p>
-      <h1 className="mt-2 text-4xl font-bold tracking-tight">Meal scheduling &amp; volunteer coordination</h1>
-      <p className="mt-4 text-lg text-slate-700">
-        Firehouse serves breakfast, lunch and dinner every day. See what each meal still needs — prepared food,
-        groceries, pantry supplies or serving help — and commit without duplicating what others are already bringing.
-      </p>
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <Link href="/login?as=user" className="rounded-lg bg-brand px-6 py-3 text-center font-semibold text-white hover:opacity-90">
-          Enter as Volunteer
-        </Link>
-        <Link href="/login?as=admin" className="rounded-lg border border-slate-400 bg-white px-6 py-3 text-center font-semibold hover:bg-slate-50">
-          Enter as Administrator
-        </Link>
-      </div>
-      <p className="mt-4 text-sm text-slate-500">Both options require signing in. Administrator access is granted only to administrator accounts.</p>
+    <main id="main" className="grid flex-1 lg:grid-cols-2">
+      <BrandPanel headline="Every meal, covered." />
+      <section className="flex items-center justify-center px-6 py-16">
+        <div className="w-full max-w-sm">
+          <h2 className="text-3xl font-bold tracking-tight">Welcome</h2>
+          <p className="mt-2 text-slate-600">See what each meal still needs, then help.</p>
+          <div className="mt-8 space-y-3">
+            <Link href="/login?as=user" className="group flex items-center justify-between rounded-2xl bg-brand px-6 py-4 font-semibold text-white shadow-sm transition hover:shadow-lg">
+              Enter as Volunteer
+              <span aria-hidden className="transition group-hover:translate-x-1">→</span>
+            </Link>
+            <Link href="/login?as=admin" className="group flex items-center justify-between rounded-2xl border border-slate-300 bg-white px-6 py-4 font-semibold transition hover:border-brand hover:shadow-lg">
+              Enter as Administrator
+              <span aria-hidden className="transition group-hover:translate-x-1">→</span>
+            </Link>
+          </div>
+          <p className="mt-6 text-sm text-slate-500">Sign-in required for both.</p>
+        </div>
+      </section>
     </main>
   );
 }

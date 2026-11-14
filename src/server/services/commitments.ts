@@ -106,6 +106,14 @@ export async function commitGroceries(s: VolunteerSession, slotId: string, lines
     st = await getPlanState(tx, planId);
     for (const [ingId, base] of wanted) {
       const line = st.result.ingredients.lines.find((l) => l.ingredientId === ingId)!;
+      const ingUnit = st.ingredients.find((i) => i.id === ingId)!.pantryItem.unitKind;
+      // Unit conversion rounds to integer base units (1 lb = 453.59 g -> 454 g, 2 lb -> 907 g), so
+      // "1 lb of a 2 lb need with 1 lb in the pantry" overshoots the shortage by 1 g. Treat an overshoot of
+      // at most 1 base unit on a measured item as exact and clamp it, so coverage never exceeds demand.
+      if (ingUnit !== "COUNT" && base > line.shortage && base - line.shortage <= 1 && line.shortage > 0) {
+        wanted.set(ingId, line.shortage);
+        continue;
+      }
       if (base > line.shortage) {
         const ing = st.ingredients.find((i) => i.id === ingId)!;
         await capacityError(tx, planId, s, `${ing.pantryItem.name}: only ${formatQty(line.shortage, ing.pantryItem.displayUnit)} is still needed.`);
@@ -149,7 +157,7 @@ export async function usePantry(s: VolunteerSession, slotId: string, key: string
     assertBookable(st);
     const ctx = await contextFields(tx, s);
     const lines = st.result.ingredients.lines.filter((l) => l.required > 0);
-    if (lines.length === 0 || st.result.ingredients.status === "FULL" || st.result.ingredients.status === "NOT_NEEDED") {
+    if (lines.length === 0 || st.result.ingredients.status === "FULL" || st.result.kitchenServings === 0) {
       throw new DomainError("PANTRY_INSUFFICIENT", "No ingredient demand is open for this meal.", { availability: await freshDetail(tx, planId, s) });
     }
     const short = lines.filter((l) => l.shortage > 0);

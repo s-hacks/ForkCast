@@ -1,6 +1,6 @@
-# Firehouse Ministries: Meal Coordination
+# ForkCast: Meal Coordination
 
-A web app for Firehouse Ministries, a Birmingham, AL shelter that serves breakfast, lunch and dinner every day. Administrators publish meal plans and maintain pantry stock. Signed-in volunteers, either solo or on behalf of an organization, can see what each meal still needs and:
+ForkCast is a web app for Firehouse Ministries, a Birmingham, AL shelter that serves breakfast, lunch and dinner every day. Administrators publish meal plans and maintain pantry stock. Signed-in volunteers, either solo or on behalf of an organization, can see what each meal still needs and:
 
 - bring prepared food
 - pledge groceries

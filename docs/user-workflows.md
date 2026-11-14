@@ -9,7 +9,7 @@ Every status shows a color, an icon and a text label together.
 | White | Available | Nobody has committed to this need yet, and help is welcome. |
 | Yellow | Partially booked | Some help is committed, but more is still needed. |
 | Gray | Fully booked | This need is covered. You can still open the meal to see details. |
-| Gray, leaf icon | Not needed | Covered another way. For example, prepared food covers every serving, so no ingredients are needed. |
+| Gray, leaf icon | Not needed | Covered another way. For example, prepared food covers every serving, or the pantry already has everything the meal needs. |
 | Red | Needs attention | An admin changed the meal and existing commitments now exceed it. |
 | Dashed | Not scheduled | No published meal plan yet. |
 | Clock | Closed | The meal time has passed. |

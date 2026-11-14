@@ -7,7 +7,7 @@ export function AppHeader({ name, contextLabel }: { name: string; contextLabel: 
     <header className="border-b border-slate-200 bg-white">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
         <Link href="/calendar" className="text-lg font-bold tracking-tight text-brand">
-          Firehouse Ministries
+          ForkCast
         </Link>
         <nav aria-label="Main" className="flex items-center gap-4 text-sm font-medium">
           <Link href="/calendar" className="hover:underline">Calendar</Link>

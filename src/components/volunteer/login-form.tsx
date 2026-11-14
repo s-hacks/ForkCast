@@ -27,27 +27,30 @@ export function LoginForm({ portal }: { portal: "user" | "admin" }) {
     router.refresh();
   }
 
+  const input = "mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/20";
+  const tab = (active: boolean) => `flex-1 rounded-lg px-3 py-2 text-center text-sm font-semibold transition ${active ? "bg-white text-brand shadow" : "text-slate-600 hover:text-brand"}`;
   return (
-    <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
+    <form onSubmit={onSubmit} className="mt-6 space-y-5" noValidate>
+      <nav aria-label="Sign in as" className="flex rounded-xl bg-slate-200/70 p-1">
+        <Link href="/login?as=user" className={tab(portal === "user")} aria-current={portal === "user" ? "page" : undefined}>Volunteer</Link>
+        <Link href="/login?as=admin" className={tab(portal === "admin")} aria-current={portal === "admin" ? "page" : undefined}>Administrator</Link>
+      </nav>
       <div>
         <label htmlFor="username" className="block text-sm font-medium">Username</label>
-        <input id="username" name="username" autoComplete="username" required className="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
+        <input id="username" name="username" autoComplete="username" required className={input} />
       </div>
       <div>
         <label htmlFor="password" className="block text-sm font-medium">Password</label>
-        <input id="password" name="password" type="password" autoComplete="current-password" required className="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
+        <input id="password" name="password" type="password" autoComplete="current-password" required className={input} />
       </div>
       {error && (
-        <p role="alert" className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">{error}</p>
+        <p role="alert" className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">{error}</p>
       )}
-      <button type="submit" disabled={busy} className="w-full rounded-lg bg-brand px-4 py-2.5 font-semibold text-white disabled:opacity-50">
+      <button type="submit" disabled={busy} className="w-full rounded-xl bg-brand px-4 py-3 font-semibold text-white shadow-sm transition hover:shadow-lg disabled:opacity-50">
         {busy ? "Signing in…" : "Sign in"}
       </button>
-      <p className="text-sm text-slate-500">
-        Demo accounts: {portal === "admin" ? "admin" : "maria, james, aisha, sam"} (passwords are in the README / your .env).
-      </p>
-      <p className="text-sm">
-        {portal === "admin" ? <Link href="/login?as=user" className="text-blue-700 underline">Volunteer sign in instead</Link> : <Link href="/login?as=admin" className="text-blue-700 underline">Administrator sign in instead</Link>}
+      <p className="text-center text-sm text-slate-500">
+        Demo: {portal === "admin" ? "admin" : "maria, james, aisha, sam"}
       </p>
     </form>
   );

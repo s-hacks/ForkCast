@@ -3,13 +3,17 @@
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
-  --brand: #b91c1c;
+  --brand: #25123a;
+  --accent: #23cc6b;
+  --lime: #bae581;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-brand: var(--brand);
+  --color-accent: var(--accent);
+  --color-lime: var(--lime);
   --font-sans: var(--font-geist-sans);
 }
 

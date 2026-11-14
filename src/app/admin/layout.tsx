@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <header className="bg-red-800 text-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <Link href="/admin" className="text-lg font-semibold">
-            Firehouse Ministries · Admin
+            ForkCast · Admin
           </Link>
           <div className="flex items-center gap-3 text-sm">
             <span>Signed in as {s.user.displayName}</span>

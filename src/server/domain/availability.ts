@@ -105,6 +105,8 @@ export function computeAvailability(input: AvailabilityInput): AvailabilityResul
   if (lines.some((l) => l.status === "CONFLICTED")) ingredientStatus = "CONFLICTED";
   else if (live.length === 0 || K === 0) ingredientStatus = "NOT_NEEDED";
   else if (lines.every((l) => l.covered >= l.required)) ingredientStatus = "FULL";
+  // Nothing pledged or reserved yet, but the pantry can cover every open line: no donor is needed.
+  else if (lines.every((l) => l.covered === 0 && l.shortage === 0)) ingredientStatus = "NOT_NEEDED";
   else if (lines.every((l) => l.covered === 0)) ingredientStatus = "AVAILABLE";
   else ingredientStatus = "PARTIAL";
 

@@ -5,8 +5,8 @@ import "./globals.css";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Firehouse Ministries · Meal Coordination",
-  description: "Meal scheduling, volunteer coordination and pantry inventory for Firehouse Ministries.",
+  title: "ForkCast · Meal Coordination",
+  description: "Meal scheduling, volunteer coordination and pantry inventory, built for Firehouse Ministries.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         {children}
         <footer className="mt-auto border-t border-slate-200 px-4 py-4 text-center text-xs text-slate-500">
-          Volunteer coordination tool for Firehouse Ministries, Birmingham AL. Unofficial design; not an official logo or brand asset.
+          ForkCast: volunteer coordination for Firehouse Ministries, Birmingham AL. Unofficial design; not an official logo or brand asset.
         </footer>
       </body>
     </html>

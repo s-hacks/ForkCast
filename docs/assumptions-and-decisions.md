@@ -41,7 +41,7 @@ Each lane is in exactly one of these states:
 - `AVAILABLE` (white): no coverage yet, capacity remains.
 - `PARTIAL` (yellow): some coverage, capacity remains.
 - `FULL` (gray): no capacity remains.
-- `NOT_NEEDED`: shown only on the ingredient lane, when `K = 0` because prepared food covers every serving.
+- `NOT_NEEDED`: shown only on the ingredient lane, when `K = 0` because prepared food covers every serving, or (amended 2026-11-14) when nothing is pledged or reserved yet and the pantry can cover every open line, so no donor is needed.
 - `CONFLICTED`: an admin override left coverage above capacity (D-14).
 
 A meal whose recipe has no ingredient lines is prepared-food-only. Its ingredient lane is `NOT_NEEDED` and prepared capacity is `N`.
