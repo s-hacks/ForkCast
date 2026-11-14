@@ -1,0 +1,46 @@
+schema: spec-driven
+
+context: |
+  Firehouse Ministries meal scheduling, volunteer coordination and pantry inventory web app (nonprofit shelter).
+  Stack: Next.js App Router + TypeScript strict, PostgreSQL 17 via Prisma 7, custom DB-backed sessions with Argon2id.
+  All availability/status math is server-authoritative and lives in src/server/domain (pure) + src/server/services (transactions).
+  Business decisions D-01..D-30 in docs/assumptions-and-decisions.md are binding; cite their IDs instead of re-deciding.
+  Quantities are integers in base units (g, ml, each). Meal dates are DATE values in the shelter timezone.
+  Only free / open-source tooling and services; never provision paid resources.
+
+# Project context (optional)
+# Add only constraints that should guide OpenSpec artifacts and workflows.
+# Include constraints an agent cannot infer by reading the code.
+# Keep general project documentation and discoverable codebase facts out.
+# Example:
+#   context: |
+#     Designs and tasks must cover Windows, macOS, and Linux
+#     Write all artifacts in Spanish
+
+rules:
+  tasks:
+    - Every task group ends with the tests that prove it and the quality gate (typecheck, lint, tests)
+  specs:
+    - Every requirement maps to a requirement ID (FR-xx / NFR-xx) from docs/requirements.md in its text
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
