@@ -13,20 +13,33 @@ Each milestone maps to one OpenSpec change. A milestone is done only when all of
 | # | Milestone | OpenSpec change | Capabilities (specs) | Status | Commit |
 |---|---|---|---|---|---|
 | 0 | Requirements & architecture | — (docs/) | — | done | |
-| 1 | Foundation | `project-foundation` | platform-foundation | in progress | |
-| 2 | Auth & roles | `authentication-and-roles` | auth | todo | |
-| 3 | Participation context | `participation-context` | participation-context | todo | |
-| 4 | Pantry inventory | `pantry-inventory` | pantry-inventory | todo | |
-| 5 | Meal planning | `meal-planning` | meal-planning | todo | |
-| 6 | Availability engine | `availability-engine` | availability-engine | todo | |
-| 7 | Meal calendar | `meal-calendar` | meal-calendar | todo | |
-| 8 | Prepared food | `prepared-food-commitments` | prepared-food-commitments | todo | |
-| 9 | Groceries + pantry allocation | `ingredient-planning` | ingredient-planning | todo | |
-| 10 | Serving | `serving-assignments` | serving-assignments | todo | |
-| 11 | My commitments | `my-commitments` | my-commitments | todo | |
-| 12 | Admin dashboard & ops | `admin-operations` | admin-operations | todo | |
-| 13 | Acceptance (E2E 1–17) | `integration-and-acceptance-testing` | (modifies several) | todo | |
-| 14 | Hardening & deployment | `production-hardening-and-deployment` | platform-foundation | todo | |
+| 1 | Foundation | `project-foundation` (archived) | platform-foundation | done | |
+| 2 | Auth & roles | `core-meal-coordination` (archived) | auth | done | |
+| 3 | Participation context | `core-meal-coordination` (archived) | participation-context | done | |
+| 4 | Pantry inventory | `core-meal-coordination` (archived) | pantry-inventory | done | |
+| 5 | Meal planning | `core-meal-coordination` (archived) | meal-planning | done | |
+| 6 | Availability engine | `core-meal-coordination` (archived) | availability-engine | done | |
+| 7 | Meal calendar | `core-meal-coordination` (archived) | meal-calendar | done | |
+| 8 | Prepared food | `core-meal-coordination` (archived) | prepared-food-commitments | done | |
+| 9 | Groceries + pantry allocation | `core-meal-coordination` (archived) | ingredient-planning | done | |
+| 10 | Serving | `core-meal-coordination` (archived) | serving-assignments | done | |
+| 11 | My commitments | `core-meal-coordination` (archived) | my-commitments | done | |
+| 12 | Admin dashboard & ops | `core-meal-coordination` (archived) | admin-operations | done | |
+| 13 | Acceptance (E2E 1–17) | — | — | partial: Tests 1–17 covered by integration/unit tests (docs/testing.md); browser E2E is a smoke suite | |
+| 14 | Hardening & deployment | — | — | partial: docs + CI + security headers done; deployment not executed (no authorization/accounts) | |
+
+## Delivery note (2026-11-14)
+
+The stakeholder set a 1.5-hour delivery window, so milestones 2–12 were delivered as one OpenSpec change, `core-meal-coordination`, with 11 capability specs. The specs keep the planned boundaries, so future changes can target each capability on its own.
+
+## Next work
+
+The remaining work, in priority order:
+
+1. Browser E2E for Tests 1–17.
+2. A grocery-pledge modify endpoint.
+3. Adopt shadcn/ui (D-34).
+4. Deploy, after authorization.
 
 ## Changes to the brief's suggested boundaries
 

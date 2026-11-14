@@ -1,0 +1,48 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: firehouse
+          POSTGRES_PASSWORD: ci_only_pw
+          POSTGRES_DB: firehouse_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U firehouse" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://firehouse:ci_only_pw@localhost:5432/firehouse_test
+      APP_ORIGIN: http://localhost:3200
+      SHELTER_TIMEZONE: America/Chicago
+      SESSION_SECRET: ci-session-secret-not-used-in-production-000
+      MEAL_START_TIMES: "07:00,11:30,17:00"
+      SEED_ADMIN_PASSWORD: ci-admin-pw-123
+      SEED_USER_PASSWORD: ci-user-pw-123
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:unit
+      - name: Integration tests
+        run: |
+          printf 'DATABASE_URL=%s\nAPP_ORIGIN=%s\nSHELTER_TIMEZONE=%s\nSESSION_SECRET=%s\nSEED_ADMIN_PASSWORD=%s\nSEED_USER_PASSWORD=%s\n' \
+            "$DATABASE_URL" "$APP_ORIGIN" "$SHELTER_TIMEZONE" "$SESSION_SECRET" "$SEED_ADMIN_PASSWORD" "$SEED_USER_PASSWORD" > .env.test
+          npm run test:int
+      - run: npm run build
+      - name: E2E
+        run: |
+          PGPASSWORD=ci_only_pw psql -h localhost -U firehouse -d firehouse_test -c "CREATE DATABASE firehouse_e2e"
+          sed 's/firehouse_test/firehouse_e2e/' .env.test > .env.e2e
+          echo 'ALLOW_INSECURE_ORIGIN=true' >> .env.e2e  # local http production build only
+          npx playwright install --with-deps chromium
+          npm run test:e2e

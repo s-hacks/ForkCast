@@ -1,0 +1,12 @@
+# Alternative to the user-space install for machines with Docker.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: firehouse
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (must match DATABASE_URL in .env)}
+      POSTGRES_DB: firehouse_dev
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+volumes:
+  pgdata:

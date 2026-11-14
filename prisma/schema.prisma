@@ -1,0 +1,319 @@
+// Firehouse Ministries schema. See docs/database-design.md.
+// CHECK constraints and partial unique indexes are appended by hand in the migration SQL.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MealPeriod {
+  BREAKFAST
+  LUNCH
+  DINNER
+}
+
+enum PlanStatus {
+  DRAFT
+  PUBLISHED
+  COMPLETED
+  CANCELLED
+}
+
+enum UnitKind {
+  MASS
+  VOLUME
+  COUNT
+}
+
+enum ContextType {
+  SOLO
+  ORGANIZATION
+}
+
+enum CommitmentType {
+  PREPARED_FOOD
+  GROCERY
+  PANTRY
+  SERVING
+}
+
+enum CommitmentStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum GroceryLineStatus {
+  PROMISED
+  RECEIVED
+  CANCELLED
+}
+
+enum AllocationStatus {
+  ACTIVE
+  RELEASED
+  CONSUMED
+}
+
+enum AllocationSource {
+  USE_PANTRY
+  PLAN_AUTO
+  GROCERY_RECEIPT
+}
+
+enum InventoryTxnType {
+  INITIAL
+  RECEIPT
+  CORRECTION
+  ADJUSTMENT
+  GROCERY_RECEIPT
+  CONSUMPTION
+  RESERVE
+  RELEASE
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  username     String   @unique // stored lower-case
+  displayName  String
+  passwordHash String
+  role         Role     @default(USER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now()) @db.Timestamptz
+  updatedAt    DateTime @updatedAt @db.Timestamptz
+
+  sessions    Session[]
+  memberships OrganizationMembership[]
+  commitments Commitment[]
+  auditLogs   AuditLog[]
+  idempotency IdempotencyRecord[]
+}
+
+model Session {
+  id             String       @id // sha256(token) hex
+  userId         String       @db.Uuid
+  expiresAt      DateTime     @db.Timestamptz
+  createdAt      DateTime     @default(now()) @db.Timestamptz
+  contextType    ContextType?
+  organizationId String?      @db.Uuid
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model LoginAttempt {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String
+  success   Boolean
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  @@index([key, createdAt])
+}
+
+model Organization {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  kind      String
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  memberships OrganizationMembership[]
+  sessions    Session[]
+  commitments Commitment[]
+}
+
+model OrganizationMembership {
+  userId         String   @db.Uuid
+  organizationId String   @db.Uuid
+  createdAt      DateTime @default(now()) @db.Timestamptz
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, organizationId])
+}
+
+model MealSlot {
+  id     String     @id @default(uuid()) @db.Uuid
+  date   DateTime   @db.Date
+  period MealPeriod
+
+  plans MealPlan[]
+
+  @@unique([date, period])
+}
+
+model MealPlan {
+  id              String     @id @default(uuid()) @db.Uuid
+  slotId          String     @db.Uuid
+  dishName        String
+  servingsTarget  Int
+  recipeYield     Int
+  serviceCapacity Int        @default(1)
+  status          PlanStatus @default(DRAFT)
+  notes           String?
+  version         Int        @default(1)
+  publishedAt     DateTime?  @db.Timestamptz
+  completedAt     DateTime?  @db.Timestamptz
+  cancelledAt     DateTime?  @db.Timestamptz
+  createdAt       DateTime   @default(now()) @db.Timestamptz
+  updatedAt       DateTime   @updatedAt @db.Timestamptz
+
+  slot        MealSlot           @relation(fields: [slotId], references: [id], onDelete: Restrict)
+  ingredients PlanIngredient[]
+  commitments Commitment[]
+  allocations PantryAllocation[]
+
+  @@index([slotId])
+}
+
+model PlanIngredient {
+  id           String    @id @default(uuid()) @db.Uuid
+  planId       String    @db.Uuid
+  pantryItemId String    @db.Uuid
+  quantity     Int // base units per recipeYield servings
+  inputUnit    String
+  removedAt    DateTime? @db.Timestamptz
+
+  plan         MealPlan           @relation(fields: [planId], references: [id], onDelete: Restrict)
+  pantryItem   PantryItem         @relation(fields: [pantryItemId], references: [id], onDelete: Restrict)
+  groceryLines GroceryLine[]
+  allocations  PantryAllocation[]
+
+  @@index([planId])
+}
+
+model PantryItem {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @unique
+  unitKind    UnitKind
+  displayUnit String
+  onHandQty   Int       @default(0)
+  reservedQty Int       @default(0)
+  version     Int       @default(1)
+  archivedAt  DateTime? @db.Timestamptz
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @db.Timestamptz
+
+  ingredients  PlanIngredient[]
+  allocations  PantryAllocation[]
+  transactions InventoryTransaction[]
+}
+
+model InventoryTransaction {
+  id            String           @id @default(uuid()) @db.Uuid
+  pantryItemId  String           @db.Uuid
+  type          InventoryTxnType
+  deltaOnHand   Int
+  deltaReserved Int
+  onHandAfter   Int
+  reservedAfter Int
+  reason        String
+  actorId       String?          @db.Uuid
+  planId        String?          @db.Uuid
+  createdAt     DateTime         @default(now()) @db.Timestamptz
+
+  pantryItem PantryItem @relation(fields: [pantryItemId], references: [id], onDelete: Restrict)
+
+  @@index([pantryItemId, createdAt])
+}
+
+model PantryAllocation {
+  id               String           @id @default(uuid()) @db.Uuid
+  planId           String           @db.Uuid
+  planIngredientId String           @db.Uuid
+  pantryItemId     String           @db.Uuid
+  commitmentId     String?          @db.Uuid
+  createdById      String?          @db.Uuid
+  quantity         Int
+  status           AllocationStatus @default(ACTIVE)
+  source           AllocationSource
+  createdAt        DateTime         @default(now()) @db.Timestamptz
+  updatedAt        DateTime         @updatedAt @db.Timestamptz
+
+  plan          MealPlan       @relation(fields: [planId], references: [id], onDelete: Restrict)
+  planIngredient PlanIngredient @relation(fields: [planIngredientId], references: [id], onDelete: Restrict)
+  pantryItem    PantryItem     @relation(fields: [pantryItemId], references: [id], onDelete: Restrict)
+  commitment    Commitment?    @relation(fields: [commitmentId], references: [id], onDelete: Restrict)
+
+  @@index([pantryItemId, status])
+  @@index([planId, status])
+}
+
+model Commitment {
+  id             String           @id @default(uuid()) @db.Uuid
+  planId         String           @db.Uuid
+  userId         String           @db.Uuid
+  contextType    ContextType
+  organizationId String?          @db.Uuid
+  type           CommitmentType
+  status         CommitmentStatus @default(ACTIVE)
+  servings       Int?
+  createdAt      DateTime         @default(now()) @db.Timestamptz
+  updatedAt      DateTime         @updatedAt @db.Timestamptz
+  cancelledAt    DateTime?        @db.Timestamptz
+
+  plan         MealPlan           @relation(fields: [planId], references: [id], onDelete: Restrict)
+  user         User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  organization Organization?      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  groceryLines GroceryLine[]
+  allocations  PantryAllocation[]
+
+  @@index([planId, status])
+  @@index([userId, status])
+  @@index([organizationId, status])
+}
+
+model GroceryLine {
+  id               String            @id @default(uuid()) @db.Uuid
+  commitmentId     String            @db.Uuid
+  planIngredientId String            @db.Uuid
+  quantity         Int
+  status           GroceryLineStatus @default(PROMISED)
+  receivedQty      Int?
+  receivedAt       DateTime?         @db.Timestamptz
+  createdAt        DateTime          @default(now()) @db.Timestamptz
+
+  commitment     Commitment     @relation(fields: [commitmentId], references: [id], onDelete: Restrict)
+  planIngredient PlanIngredient @relation(fields: [planIngredientId], references: [id], onDelete: Restrict)
+
+  @@index([planIngredientId, status])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @db.Uuid
+  action     String
+  entityType String
+  entityId   String
+  data       Json
+  createdAt  DateTime @default(now()) @db.Timestamptz
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model IdempotencyRecord {
+  userId    String   @db.Uuid
+  key       String
+  route     String
+  status    Int
+  body      Json
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, key])
+}

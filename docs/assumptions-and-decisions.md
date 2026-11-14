@@ -152,6 +152,12 @@ The month grid has three meal slots per day, which off-the-shelf day pickers can
 **D-32 Timezone.**
 `SHELTER_TIMEZONE` defaults to `America/Chicago` (Firehouse Ministries is at 626 2nd Ave. N., Birmingham, AL; [firehouseshelter.com](https://firehouseshelter.com/meals-program/), [Alabama NewsCenter](https://alabamanewscenter.com/?p=222192)). Meal dates are stored as PostgreSQL `DATE` and passed around as `YYYY-MM-DD` strings. Date arithmetic works on calendar dates, never by adding 24 h of milliseconds. "Today" and meal start instants are computed in the shelter timezone with `@date-fns/tz`.
 
+**D-33 Next.js Cache Components disabled.**
+`next.config.ts` sets `cacheComponents: false`. Every page reads the session and live booking capacity, so the dynamic-by-default rendering model is simpler and can never serve stale availability. Turning the option on would mean wrapping every session read in `<Suspense>` and adding cache directives, with no benefit for this app.
+
+**D-34 Plain Tailwind components instead of shadcn/ui.**
+The 1.5-hour delivery window left no time to install and theme shadcn/ui, so the UI uses hand-written Tailwind components. Accessibility requirements still hold: `StatusBadge` (`src/components/status.tsx`) always pairs the white/yellow/gray color with an icon and a text label, and form inputs carry labels. shadcn/ui can be adopted later without touching any business logic.
+
 ## Open stakeholder questions
 
 1. Should cancellations close earlier than meal start, for example 24 h before? (D-13)
